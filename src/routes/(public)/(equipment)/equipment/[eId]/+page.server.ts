@@ -7,14 +7,11 @@ import {
 } from '$db/Equipment.db.js';
 import { superValidate } from 'sveltekit-superforms/server';
 import type { PageServerLoad } from './$types';
-import { CartItemZSchema, RegisterFormSchema, RegisterFormZSchema } from '$lib/schemas';
+import { CartItemZSchema, RegisterFormZSchema } from '$lib/schemas';
 import { fail, type Actions, redirect } from '@sveltejs/kit';
 import { addToCart } from '$db/Cart.db';
 import { zod } from 'sveltekit-superforms/adapters';
 import { ESecondaryStatus } from '@prisma/client';
-import { get } from 'http';
-import { z } from 'zod';
-import { addAttendees } from '$db/Attendance.db';
 import { registerAttendee } from '$db/Session.db';
 
 // @ts-ignore
@@ -66,20 +63,15 @@ export const actions: Actions = {
     };
   },
   register: async ({ request }) => {
-    // console.log('register action', request);
     const attendeeForm = await superValidate(request, zod(RegisterFormZSchema));
-
-    const sessionId = (await getSessionId(attendeeForm.data.equipmentId)) || '';
 
     if (!attendeeForm.valid) {
       return fail(400, { attendeeForm });
     }
 
-    console.log(attendeeForm.data.userId, sessionId);
-
     return {
       attendeeForm,
-      response: await registerAttendee(attendeeForm.data.userId, sessionId)
+      response: await registerAttendee(attendeeForm.data.userId, attendeeForm.data.equipmentId)
     };
   }
 };

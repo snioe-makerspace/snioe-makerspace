@@ -1,7 +1,7 @@
 import { SupabaseEnum } from '$lib/Enums';
 import { getStorageUrl } from '$lib/SupabaseUtils';
 import { db } from '$lib/prisma';
-import type { ECategoriesSchema, EItemSchema, EquipmentById, WeekDaysEnum } from '$lib/schemas';
+import type { ECategoriesSchema, EItemSchema, WeekDaysEnum } from '$lib/schemas';
 import {
   ESecondaryStatus,
   type ECategories,
@@ -220,7 +220,7 @@ export async function getRegisteredUser(userId: string, sessionId: string) {
     .findFirst({
       where: {
         AND: {
-          userId,
+          user_id: userId,
           sessionId
         }
       }
