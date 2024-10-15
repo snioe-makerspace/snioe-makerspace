@@ -32,11 +32,11 @@
   });
 
   $: user = $SessionStore?.user ?? null;
-  $: availabilityPane = false;
   $: manualPane = false;
   $: videoPane = false;
   $: selectedInstance = null as EquipmentById['instances'][0] | null;
   $: seemore = false;
+  $: availabilityPane = false;
 
   $: isUserBlacklisted = user?.app_metadata.custom_claims.is_blacklisted ?? false;
 </script>
@@ -46,6 +46,8 @@
     bind:userId={user.id}
     bind:modal={availabilityPane}
     bind:formStore={data.cartItemForm}
+    bind:registeredUser={data.registeredUser}
+    bind:registerForm={data.registerForm}
     bind:currentEquipment={data.equipment}
     bind:instanceId={selectedInstance['id']}
     bind:trained={data.trainedUsers}

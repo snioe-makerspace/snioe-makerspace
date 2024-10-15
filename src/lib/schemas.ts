@@ -63,13 +63,13 @@ export const UserProfileZodSchema = z
 export type UserProfileSchema = z.infer<typeof UserProfileZodSchema>;
 
 export enum WeekDaysEnum {
-  Su = 'SU',
-  M = 'MO',
-  T = 'TU',
-  W = 'WE',
-  Th = 'TH',
-  F = 'FR',
-  Sa = 'SA'
+  'Su' = 'SU',
+  'M' = 'MO',
+  'T' = 'TU',
+  'W' = 'WE',
+  'Th' = 'TH',
+  'F' = 'FR',
+  'Sa' = 'SA'
 }
 
 export const EItemZodSchema = z.object({
@@ -99,6 +99,14 @@ export const EItemZodSchema = z.object({
 });
 
 export type EItemSchema = z.infer<typeof EItemZodSchema>;
+
+export const RegisterFormZSchema = z.object({
+  userId: z.string(),
+  equipmentId: z.string()
+  // Add any other fields as necessary
+});
+
+export type RegisterFormSchema = z.infer<typeof RegisterFormZSchema>;
 
 export const ETrainingSessionZSchema = z.object({
   id: z.string(),
@@ -158,7 +166,8 @@ export const EZodSchema = z.object({
   eCategoriesId: z.string().min(7, { message: 'Category is required' }),
   // isDeleted: z.boolean().optional().or(z.literal(false))
   secondaryStatus: z.nativeEnum(ESecondaryStatus),
-  trainingSession: z.array(ETrainingSessionZSchema).optional()
+  trainingSession: z.array(ETrainingSessionZSchema).optional(),
+  onlyForPHDs: z.boolean().optional().or(z.literal(false))
 });
 
 export type ESchema = z.infer<typeof EZodSchema>;

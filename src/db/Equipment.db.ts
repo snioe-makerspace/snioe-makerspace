@@ -29,7 +29,8 @@ export async function getAllEquipmentPreview(): Promise<
         model: true,
         image: true,
         eCategoriesId: true,
-        secondaryStatus: true
+        secondaryStatus: true,
+        onlyForPHDs: true
       }
     })
     .then((res) => {
@@ -186,6 +187,70 @@ export async function getTrainingDay(equipmentsId: string) {
     .then((res) => res?.day);
 }
 
+export async function getSessionId(equipmentsId: string) {
+  const categoryId = await db.equipment.findFirst({
+    where: {
+      id: equipmentsId
+    },
+    select: {
+      category: {
+        select: {
+          id: true
+        }
+      }
+    }
+  });
+
+  return await db.eTrainingSession
+    .findFirst({
+      where: {
+        categoryIds: {
+          has: categoryId?.category.id
+        }
+      },
+      select: {
+        id: true
+      }
+    })
+    .then((res) => res?.id);
+}
+
+export async function getRegisteredUser(userId: string, sessionId: string) {
+  return await db.eTrainingSessionBooking
+    .findFirst({
+      where: {
+        AND: {
+          userId,
+          sessionId
+        }
+      }
+    })
+    .then((res) => {
+      console.log(res);
+      if (res) {
+        return true;
+      } else {
+        return false;
+      }
+    });
+}
+
+export async function getRegisteredUsers() {
+  return await db.eTrainingSessionBooking.findMany({
+    select: {
+      sessionId: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+          type: true,
+          typeData: true
+        }
+      }
+    }
+  });
+}
+
 export async function upsertEquipment(equipment: Equipment) {
   return await db.equipment.upsert({
     where: {
@@ -196,7 +261,8 @@ export async function upsertEquipment(equipment: Equipment) {
       model: equipment.model,
       image: equipment.image,
       description: equipment.description,
-      eCategoriesId: equipment.eCategoriesId
+      eCategoriesId: equipment.eCategoriesId,
+      onlyForPHDs: equipment.onlyForPHDs
     },
     create: {
       name: equipment.name,
@@ -204,7 +270,8 @@ export async function upsertEquipment(equipment: Equipment) {
       image: equipment.image,
       description: equipment.description,
       specifications: equipment.specifications,
-      eCategoriesId: equipment.eCategoriesId
+      eCategoriesId: equipment.eCategoriesId,
+      onlyForPHDs: equipment.onlyForPHDs
     }
   });
 }
@@ -263,7 +330,15 @@ export async function getECategories() {
   return await db.eCategories.findMany();
 }
 
-export async function getESessions() {
+export async function getESessions(): Promise<
+  {
+    id: string;
+    name: string;
+    categoryIds: string[];
+    day: WeekDaysEnum;
+  }[]
+> {
+  // @ts-ignore
   return await db.eTrainingSession.findMany({
     select: {
       id: true,

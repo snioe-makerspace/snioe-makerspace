@@ -4,15 +4,33 @@
   import Calendar from '$components/Calendar.svelte';
   import { superForm } from 'sveltekit-superforms/client';
   import type { SuperValidated } from 'sveltekit-superforms';
-  import type { CartItemSchema, EquipmentById } from '$lib/schemas';
+  import type {
+    CartItemSchema,
+    EquipmentById,
+    RegisterFormSchema,
+    RegisterFormType
+  } from '$lib/schemas';
   import { SlotStatus, getSelectionSlots, getSlots } from '$utils/AvailabilityRules';
   import { getWeekdayDates, inverseWeekDaysEnum } from '$utils/WeekDayDates';
+  import { z } from 'zod';
 
-  export let { modal, formStore, currentEquipment, instanceId, userId, trained, day } = $$props as {
+  export let {
+    modal,
+    formStore,
+    registerForm,
+    currentEquipment,
+    registeredUser,
+    instanceId,
+    userId,
+    trained,
+    day
+  } = $$props as {
     modal: boolean;
     userId: string;
     instanceId: string;
     formStore: SuperValidated<CartItemSchema>;
+    registerForm: SuperValidated<RegisterFormSchema>;
+    registeredUser: boolean;
     currentEquipment: EquipmentById | null;
     trained: boolean;
     day?: string;
@@ -60,6 +78,25 @@
     resetForm: true
   });
 
+  const { form: rForm, enhance: rEnhance } = superForm(registerForm, {
+    id: 'registerForm',
+    taintedMessage: null,
+    dataType: 'json',
+    onSubmit() {
+      console.log('Registering for training', +rForm);
+    },
+    onResult(event) {
+      if (event.result.status === 200) {
+        addToast({
+          message: 'Registration successful',
+          type: 'success'
+        });
+        modal = false;
+      }
+    },
+    resetForm: true
+  });
+
   $: slots = getSlots({
     booked: currentInstance?.BookingItem!,
     carted: currentInstance?.CartItem!,
@@ -82,6 +119,8 @@
     month: 'short',
     day: 'numeric'
   };
+
+  $: console.log($$props.registeredUser);
 </script>
 
 <Pane className="CartItemPane" bind:open={modal} style="--paneWidth: 420px;">
@@ -94,8 +133,31 @@
       </i>
     {:else}
       <i class="CrispMessage" data-type="error" data-format="box">
-        You are not trained for this equipment. Please attend one of the training sessions on {day}.
+        You are not trained for this equipment.
       </i>
+      {#if !$$props.registeredUser}
+        <i class="CrispMessage" data-type="info" data-format="box"
+          >Register yourself for an upcoming training session for this equipment on {day}</i
+        >
+        <form use:rEnhance method="POST" action="/equipment/[eId]?/register" id="registerForm">
+          <button
+            class="CrispButton"
+            data-type="dark-blue"
+            form="registerForm"
+            on:click={() => {
+              $rForm = {
+                userId: userId,
+                equipmentId: equipmentId
+              };
+            }}>Register</button
+          >
+        </form>
+      {:else}
+        <i class="CrispMessage" data-type="info" data-format="box">
+          You have already registered for a training session on {day}. Please attend the session
+          before booking for the equipment.
+        </i>
+      {/if}
     {/if}
     {#if $$props.trained}
       <Calendar bind:value={dateSelector} {maxOffset} bind:blackout />
@@ -173,7 +235,8 @@
 
         </tbody>
         <tfoot>
-          <tr>
+          <tr>class="CrispButton"
+        data-type="dark"
             <td colspan="5">
               Showing {currentEquipment.trainingSession?.length ?? 0} result(s)
             </td>
@@ -185,9 +248,9 @@
   <div class="Row--j-end gap-10" slot="footer">
     {#if $$props.trained}
       <button
-        class="CrispButton"
-        data-type="dark"
         form="cartItemForm"
+        class="CrispButton"
+        data-type="dark-blue"
         disabled={!dateSelector || !$form.start || !$form.end}
       >
         Add to cart
